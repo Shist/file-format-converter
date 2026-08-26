@@ -1,5 +1,13 @@
 import { Controller, Get, Param, Post, Body } from '@nestjs/common';
 import { UsersService } from './users.service';
+import { Role } from './user.entity';
+
+// Temporal interface, will remove after implementing DTO
+interface CreateUserDto {
+  email: string;
+  password: string;
+  role?: Role;
+}
 
 @Controller('users')
 export class UsersController {
@@ -16,8 +24,7 @@ export class UsersController {
   }
 
   @Post()
-  create(@Body() body: any) {
-    // TODO: change 'any' for DTO with validation (Joi)
+  create(@Body() body: CreateUserDto) {
     return this.usersService.create(body.email, body.password, body.role);
   }
 }
