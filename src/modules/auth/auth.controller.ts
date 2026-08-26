@@ -1,5 +1,5 @@
 import { Controller, Post, Body, Res } from '@nestjs/common';
-import { type Response } from 'express';
+import type { FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
 
 // Temporal interface, will remove after implementing DTO
@@ -15,21 +15,23 @@ export class AuthController {
   @Post('login')
   async login(
     @Body() body: LoginDto, // TODO: change on DTO
-    @Res({ passthrough: true }) res: Response,
+    @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const user = await this.authService.validateUser(body.email, body.password);
     const tokens = this.authService.login(user);
 
-    res.cookie('access_token', tokens.accessToken, {
+    res.setCookie('access_token', tokens.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
     });
 
-    res.cookie('refresh_token', tokens.refreshToken, {
+    res.setCookie('refresh_token', tokens.refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
+      path: '/',
     });
 
     return { message: 'Успешный вход', user: tokens.user };
