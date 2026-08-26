@@ -49,20 +49,20 @@ CLI uses `src/database/data-source.ts`. At runtime, Nest uses the DataSource fro
 
 ## Libraries
 
-| Purpose       | Library                  |
-|---------------|--------------------------|
-| HTTP          | Fastify (`@nestjs/platform-fastify`) |
-| Validation    | Joi                      |
-| ORM           | TypeORM (`@nestjs/typeorm`) |
-| Database      | PostgreSQL (`pg`)        |
+| Purpose    | Library                              |
+| ---------- | ------------------------------------ |
+| HTTP       | Fastify (`@nestjs/platform-fastify`) |
+| Validation | Joi                                  |
+| ORM        | TypeORM (`@nestjs/typeorm`)          |
+| Database   | PostgreSQL (`pg`)                    |
 
 ## Core Modules
 
 | Purpose       | Module           |
-|---------------|-----------------|
-| Configuration | `ConfigModule`  |
+| ------------- | ---------------- |
+| Configuration | `ConfigModule`   |
 | Database      | `DatabaseModule` |
-| Health Check  | `HealthModule`  |
+| Health Check  | `HealthModule`   |
 
 ## Adding a Module
 
