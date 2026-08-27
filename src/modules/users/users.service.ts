@@ -62,4 +62,9 @@ export class UsersService {
 
     return userWithoutPassword as User;
   }
+
+  async remove(id: string): Promise<void> {
+    const user = await this.findOneById(id);
+    await this.userRepository.remove(user);
+  }
 }
