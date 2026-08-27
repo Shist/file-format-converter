@@ -12,13 +12,7 @@ import { UsersService } from './users.service';
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
 import { PermissionsGuard } from '../rbac/guards/permissions.guard';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
-
-// Temporal interface, will remove after implementing DTO
-interface CreateUserDto {
-  email: string;
-  password: string;
-  role?: string;
-}
+import { CreateUserDto } from './dto/create-user.dto';
 
 @Controller('users')
 export class UsersController {

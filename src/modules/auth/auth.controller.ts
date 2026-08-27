@@ -1,12 +1,7 @@
 import { Controller, Post, Body, Res } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
-
-// Temporal interface, will remove after implementing DTO
-interface LoginDto {
-  email: string;
-  password: string;
-}
+import { LoginDto } from './dto/login.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -14,7 +9,7 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body() body: LoginDto, // TODO: change on DTO
+    @Body() body: LoginDto,
     @Res({ passthrough: true }) res: FastifyReply,
   ) {
     const user = await this.authService.validateUser(body.email, body.password);

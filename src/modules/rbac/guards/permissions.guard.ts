@@ -9,14 +9,6 @@ import type { FastifyRequest } from 'fastify';
 import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
 import { RbacService } from '../rbac.service';
 
-interface RequestWithUser extends FastifyRequest {
-  user?: {
-    id: string;
-    email: string;
-    role: string;
-  };
-}
-
 @Injectable()
 export class PermissionsGuard implements CanActivate {
   constructor(
@@ -34,7 +26,7 @@ export class PermissionsGuard implements CanActivate {
       return true;
     }
 
-    const request = context.switchToHttp().getRequest<RequestWithUser>();
+    const request = context.switchToHttp().getRequest<FastifyRequest>();
     const user = request.user;
 
     if (!user || !user.role) {

@@ -2,6 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { FastifyRequest } from 'fastify';
+import { ActiveUserData } from '../interfaces/active-user-data.interface';
 
 export interface JwtPayload {
   sub: string;
@@ -23,7 +24,7 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     });
   }
 
-  validate(payload: JwtPayload) {
+  validate(payload: JwtPayload): ActiveUserData {
     return { id: payload.sub, email: payload.email, role: payload.role };
   }
 }
