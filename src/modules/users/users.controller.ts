@@ -1,13 +1,12 @@
 import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
-import { Role } from './user.entity';
 
 // Temporal interface, will remove after implementing DTO
 interface CreateUserDto {
   email: string;
   password: string;
-  role?: Role;
+  role?: string;
 }
 
 @Controller('users')

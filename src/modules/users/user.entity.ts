@@ -4,12 +4,10 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
-
-export enum Role {
-  USER = 'user',
-  ADMIN = 'admin',
-}
+import { RoleEntity } from '../rbac/entities/role.entity';
 
 @Entity('users')
 export class User {
@@ -22,8 +20,9 @@ export class User {
   @Column()
   passwordHash!: string;
 
-  @Column({ type: 'enum', enum: Role, default: Role.USER })
-  role!: Role;
+  @ManyToOne(() => RoleEntity)
+  @JoinColumn({ name: 'role_id' })
+  role!: RoleEntity;
 
   @CreateDateColumn()
   createdAt!: Date;

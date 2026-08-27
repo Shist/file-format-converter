@@ -2,12 +2,11 @@ import { Injectable } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import type { FastifyRequest } from 'fastify';
-import { Role } from '../../users/user.entity';
 
 export interface JwtPayload {
   sub: string;
   email: string;
-  role: Role;
+  role: string;
 }
 
 @Injectable()

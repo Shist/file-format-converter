@@ -30,7 +30,7 @@ export class AuthService {
   }
 
   login(user: ValidatedUser) {
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    const payload = { sub: user.id, email: user.email, role: user.role?.name };
 
     const accessToken = this.jwtService.sign(payload);
     const refreshToken = this.jwtService.sign(payload, {
