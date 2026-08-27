@@ -16,12 +16,12 @@ export class AuthService {
   async validateUser(email: string, pass: string) {
     const user = await this.usersService.findByEmail(email);
     if (!user) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException('Incorrect email or password');
     }
 
     const isPasswordValid = await bcrypt.compare(pass, user.passwordHash);
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Неверный email или пароль');
+      throw new UnauthorizedException('Incorrect email or password');
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
