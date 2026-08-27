@@ -1,9 +1,10 @@
 import { Controller, Post, Body, Res } from '@nestjs/common';
 import type { FastifyReply } from 'fastify';
 import { AuthService } from './auth.service';
-import { LoginDto } from './dto/login.dto';
-import { RequestOtpDto } from './dto/request-otp.dto';
 import { OtpService } from './otp.service';
+import { RequestOtpDto } from './dto/request-otp.dto';
+import { LoginDto } from './dto/login.dto';
+import { VerifyOtpDto } from './dto/verify-otp.dto';
 
 @Controller('auth')
 export class AuthController {
@@ -44,5 +45,31 @@ export class AuthController {
       message:
         'If such an email exists (or we allow registration), we have sent a code.',
     };
+  }
+
+  @Post('verify-otp')
+  async verifyOtp(
+    @Body() body: VerifyOtpDto,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ) {
+    await this.otpService.verifyOtp(body.email, body.code);
+
+    const tokens = await this.authService.passwordlessLogin(body.email);
+
+    res.setCookie('access_token', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    res.setCookie('refresh_token', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return { message: 'Successful passwordless login', user: tokens.user };
   }
 }

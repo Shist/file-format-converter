@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, BadRequestException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
@@ -38,5 +38,27 @@ export class OtpService {
       `Or click the Magic Link: http://localhost:3000/magic-login?email=${email}&code=${code}`,
     );
     console.log(`=========================================\n`);
+  }
+
+  async verifyOtp(email: string, plainCode: string): Promise<boolean> {
+    const otpRecord = await this.otpRepository.findOne({ where: { email } });
+
+    if (!otpRecord) {
+      throw new BadRequestException('Invalid or expired code');
+    }
+
+    if (new Date() > otpRecord.expiresAt) {
+      await this.otpRepository.delete({ email });
+      throw new BadRequestException('The code has expired');
+    }
+
+    const isCodeValid = await bcrypt.compare(plainCode, otpRecord.codeHash);
+    if (!isCodeValid) {
+      throw new BadRequestException('Invalid code');
+    }
+
+    await this.otpRepository.delete({ email });
+
+    return true;
   }
 }
