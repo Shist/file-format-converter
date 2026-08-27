@@ -7,6 +7,7 @@ import {
 import { Reflector } from '@nestjs/core';
 import type { FastifyRequest } from 'fastify';
 import { PERMISSIONS_KEY } from '../decorators/require-permissions.decorator';
+import { RbacService } from '../rbac.service';
 
 interface RequestWithUser extends FastifyRequest {
   user?: {
@@ -18,9 +19,12 @@ interface RequestWithUser extends FastifyRequest {
 
 @Injectable()
 export class PermissionsGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private readonly rbacService: RbacService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredPermissions = this.reflector.getAllAndOverride<string[]>(
       PERMISSIONS_KEY,
       [context.getHandler(), context.getClass()],
@@ -37,11 +41,13 @@ export class PermissionsGuard implements CanActivate {
       throw new ForbiddenException("You don't have a role assigned.");
     }
 
-    // TODO: Here we'll need to go to the database, get permissions for user.role
-    // and check if any of them contain the required Permissions.
-
-    if (user.role === 'admin') {
-      // Unsafe member access .role on an `any` value.
+    const userPermissions = await this.rbacService.getPermissionsForRole(
+      user.role,
+    );
+    const hasPermission = requiredPermissions.every((perm) =>
+      userPermissions.includes(perm),
+    );
+    if (hasPermission) {
       return true;
     }
 
