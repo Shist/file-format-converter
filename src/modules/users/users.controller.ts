@@ -1,6 +1,8 @@
 import { Controller, Get, Param, Post, Body, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { UsersService } from './users.service';
+import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
+import { PermissionsGuard } from '../rbac/guards/permissions.guard';
 
 // Temporal interface, will remove after implementing DTO
 interface CreateUserDto {
@@ -13,7 +15,8 @@ interface CreateUserDto {
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
 
-  @UseGuards(AuthGuard('jwt'))
+  @UseGuards(AuthGuard('jwt'), PermissionsGuard)
+  @RequirePermissions('users.read')
   @Get()
   findAll() {
     return this.usersService.findAll();
