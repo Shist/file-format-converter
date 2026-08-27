@@ -3,6 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { User } from '../users/user.entity';
 import { UsersService } from '../users/users.service';
+import { JwtPayload } from './strategies/jwt.strategy';
 
 export type ValidatedUser = Omit<User, 'passwordHash'>;
 
@@ -58,5 +59,22 @@ export class AuthService {
     const { passwordHash, ...result } = user;
 
     return this.login(result);
+  }
+
+  async refreshToken(oldRefreshToken: string) {
+    try {
+      const payload = this.jwtService.verify<JwtPayload>(oldRefreshToken, {
+        secret: process.env.JWT_REFRESH_SECRET || 'default_refresh_secret',
+      });
+
+      const user = await this.usersService.findOneById(payload.sub);
+
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { passwordHash, ...result } = user;
+
+      return this.login(result as ValidatedUser);
+    } catch {
+      throw new UnauthorizedException('Invalid or expired refresh token');
+    }
   }
 }

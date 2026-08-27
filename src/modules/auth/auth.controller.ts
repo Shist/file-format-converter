@@ -1,5 +1,12 @@
-import { Controller, Post, Body, Res } from '@nestjs/common';
-import type { FastifyReply } from 'fastify';
+import {
+  Controller,
+  Post,
+  Body,
+  Res,
+  Req,
+  UnauthorizedException,
+} from '@nestjs/common';
+import type { FastifyReply, FastifyRequest } from 'fastify';
 import { AuthService } from './auth.service';
 import { OtpService } from './otp.service';
 import { RequestOtpDto } from './dto/request-otp.dto';
@@ -71,5 +78,38 @@ export class AuthController {
     });
 
     return { message: 'Successful passwordless login', user: tokens.user };
+  }
+
+  @Post('refresh')
+  async refresh(
+    @Req() req: FastifyRequest,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ) {
+    const refreshToken = req.cookies['refresh_token'];
+
+    if (!refreshToken) {
+      throw new UnauthorizedException("Refresh token wasn't found in cookies");
+    }
+
+    const tokens = await this.authService.refreshToken(refreshToken);
+
+    res.setCookie('access_token', tokens.accessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    res.setCookie('refresh_token', tokens.refreshToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+    });
+
+    return {
+      message: 'Tokens have been successfully updated',
+      user: tokens.user,
+    };
   }
 }
