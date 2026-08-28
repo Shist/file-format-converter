@@ -25,6 +25,8 @@ import {
 } from './dto/change-email.dto';
 import { OtpService } from '../auth/otp.service';
 import { VerifyDeleteDto } from './dto/delete-user.dto';
+import { UserResponseDto } from './dto/user-response.dto';
+import { type ActiveUserData } from '../auth/interfaces/active-user-data.interface';
 
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('users')
@@ -67,14 +69,39 @@ export class UsersController {
 
   @RequirePermissions('users.list')
   @Get()
-  getUsers(@Query() query: GetUsersQueryDto) {
-    return this.usersService.findAll(query);
+  async getUsers(
+    @Query() query: GetUsersQueryDto,
+    @CurrentUser() currentUser: ActiveUserData,
+  ) {
+    const result = await this.usersService.findAll(query);
+
+    const isAdmin =
+      currentUser.role === 'admin' || currentUser.role === 'manager';
+
+    const mappedItems = result.items.map((user) =>
+      UserResponseDto.mapToResponse(user, isAdmin),
+    );
+
+    return {
+      items: mappedItems,
+      nextCursor: result.nextCursor,
+    };
   }
 
   @RequirePermissions('users.read')
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.usersService.findOneById(id);
+  async findOne(
+    @Param('id') id: string,
+    @CurrentUser() currentUser: ActiveUserData,
+  ) {
+    const user = await this.usersService.findOneById(id);
+
+    const isPrivileged =
+      currentUser.id === id ||
+      currentUser.role === 'admin' ||
+      currentUser.role === 'manager';
+
+    return UserResponseDto.mapToResponse(user, isPrivileged);
   }
 
   @Post()
