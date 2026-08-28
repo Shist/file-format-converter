@@ -8,7 +8,9 @@ import {
   Body,
   UseGuards,
   Delete,
+  Res,
 } from '@nestjs/common';
+import type { FastifyReply } from 'fastify';
 import { UsersService } from './users.service';
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
 import { PermissionsGuard } from '../rbac/guards/permissions.guard';
@@ -22,6 +24,7 @@ import {
   VerifyEmailChangeDto,
 } from './dto/change-email.dto';
 import { OtpService } from '../auth/otp.service';
+import { VerifyDeleteDto } from './dto/delete-user.dto';
 
 @UseGuards(JwtAuthGuard, PermissionsGuard)
 @Controller('users')
@@ -83,6 +86,29 @@ export class UsersController {
   @Patch(':id')
   updateUser(@Param('id') id: string, @Body() dto: UpdateUserDto) {
     return this.usersService.update(id, dto);
+  }
+
+  @Post('me/delete/request')
+  async requestSelfDelete(@CurrentUser('email') email: string) {
+    await this.otpService.generateAndSendOtp(email);
+    return { message: 'Verification code sent to confirm account deletion' };
+  }
+
+  @Post('me/delete/verify')
+  async verifySelfDelete(
+    @CurrentUser('id') userId: string,
+    @CurrentUser('email') email: string,
+    @Body() dto: VerifyDeleteDto,
+    @Res({ passthrough: true }) res: FastifyReply,
+  ) {
+    await this.otpService.verifyOtp(email, dto.code);
+
+    await this.usersService.remove(userId);
+
+    res.clearCookie('access_token', { path: '/' });
+    res.clearCookie('refresh_token', { path: '/' });
+
+    return { message: 'Your account has been successfully deleted' };
   }
 
   @RequirePermissions('users.delete')
