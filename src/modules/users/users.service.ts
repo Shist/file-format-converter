@@ -4,6 +4,7 @@ import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { RoleEntity } from '../rbac/entities/role.entity';
+import { GetUsersQueryDto } from './dto/get-users-query.dto';
 
 @Injectable()
 export class UsersService {
@@ -14,11 +15,78 @@ export class UsersService {
     private readonly roleRepository: Repository<RoleEntity>,
   ) {}
 
-  async findAll(): Promise<User[]> {
-    return this.userRepository.find({
-      select: ['id', 'email', 'createdAt', 'updatedAt'],
-      relations: ['role'],
-    });
+  async findAll(
+    query: GetUsersQueryDto = { limit: 20, sort: 'createdAt', order: 'DESC' },
+  ) {
+    const { cursor, limit, q, sort, order } = query;
+
+    const qb = this.userRepository
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role')
+      .select([
+        'user.id',
+        'user.email',
+        'user.createdAt',
+        'user.updatedAt',
+        'role.id',
+        'role.name',
+      ]);
+
+    // Поиск по email или ID
+    if (q) {
+      qb.andWhere('(user.email ILIKE :q OR CAST(user.id AS TEXT) = :q)', {
+        q: `%${q}%`,
+      });
+    }
+
+    // Декодирование и применение курсора
+    if (cursor) {
+      const decodedCursor = Buffer.from(cursor, 'base64').toString('ascii');
+      const [cursorSortValue, cursorId] = decodedCursor.split('_');
+
+      const operator = order === 'DESC' ? '<' : '>';
+
+      if (sort === 'createdAt') {
+        const date = new Date(Number(cursorSortValue));
+        qb.andWhere(
+          `(user.createdAt ${operator} :date OR (user.createdAt = :date AND user.id ${operator} :id))`,
+          { date, id: cursorId },
+        );
+      } else {
+        qb.andWhere(
+          `(user.${sort} ${operator} :val OR (user.${sort} = :val AND user.id ${operator} :id))`,
+          { val: cursorSortValue, id: cursorId },
+        );
+      }
+    }
+
+    // Принудительно добавляем сортировку по ID для стабильности пагинации
+    qb.orderBy(`user.${sort}`, order)
+      .addOrderBy('user.id', order)
+      .take(limit + 1); // Берем на 1 больше, чтобы понять, есть ли следующая страница
+
+    const users = await qb.getMany();
+    const hasNextPage = users.length > limit;
+
+    if (hasNextPage) {
+      users.pop(); // Удаляем лишний элемент
+    }
+
+    // Генерация следующего курсора
+    let nextCursor: string | null = null;
+    if (hasNextPage && users.length > 0) {
+      const lastUser = users[users.length - 1];
+      const sortValue =
+        sort === 'createdAt' ? lastUser.createdAt.getTime() : lastUser[sort];
+      nextCursor = Buffer.from(`${sortValue}_${lastUser.id}`).toString(
+        'base64',
+      );
+    }
+
+    return {
+      items: users,
+      nextCursor,
+    };
   }
 
   async findOneById(id: string): Promise<User> {
