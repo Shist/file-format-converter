@@ -1,10 +1,15 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  ConflictException,
+} from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { User } from './user.entity';
 import { RoleEntity } from '../rbac/entities/role.entity';
 import { GetUsersQueryDto } from './dto/get-users-query.dto';
+import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
@@ -128,6 +133,47 @@ export class UsersService {
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const { passwordHash: _, ...userWithoutPassword } = savedUser;
 
+    return userWithoutPassword as User;
+  }
+
+  async update(id: string, dto: UpdateUserDto): Promise<User> {
+    const user = await this.findOneById(id);
+
+    if (dto.password) {
+      const salt = await bcrypt.genSalt(10);
+      user.passwordHash = await bcrypt.hash(dto.password, salt);
+    }
+
+    if (dto.role) {
+      const role = await this.roleRepository.findOne({
+        where: { name: dto.role },
+      });
+      if (!role) {
+        throw new NotFoundException(`Role ${dto.role} is not found`);
+      }
+      user.role = role;
+    }
+
+    const updatedUser = await this.userRepository.save(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
+    return userWithoutPassword as User;
+  }
+
+  async checkEmailAvailability(email: string): Promise<void> {
+    const existing = await this.findByEmail(email);
+    if (existing) {
+      throw new ConflictException('This email is already in use');
+    }
+  }
+
+  async updateEmail(id: string, newEmail: string): Promise<User> {
+    const user = await this.findOneById(id);
+    user.email = newEmail;
+
+    const updatedUser = await this.userRepository.save(user);
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { passwordHash: _, ...userWithoutPassword } = updatedUser;
     return userWithoutPassword as User;
   }
 

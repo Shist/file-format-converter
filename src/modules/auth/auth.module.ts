@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, forwardRef } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
@@ -12,7 +12,7 @@ import { OtpService } from './otp.service';
 @Module({
   imports: [
     TypeOrmModule.forFeature([OtpEntity]),
-    UsersModule,
+    forwardRef(() => UsersModule),
     PassportModule,
     JwtModule.register({
       secret: process.env.JWT_ACCESS_SECRET || 'default_access_secret',
@@ -23,5 +23,6 @@ import { OtpService } from './otp.service';
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtStrategy, OtpService],
+  exports: [OtpService, AuthService],
 })
 export class AuthModule {}
