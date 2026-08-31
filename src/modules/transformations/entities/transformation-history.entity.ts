@@ -41,8 +41,8 @@ export class TransformationHistoryEntity {
   @Column({ nullable: true })
   errorCode!: string;
 
-  @Column({ nullable: true })
-  fileId!: string;
+  @Column({ type: 'varchar', nullable: true })
+  fileId!: string | null;
 
   @CreateDateColumn()
   createdAt!: Date;

@@ -16,12 +16,14 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 import { GetHistoryQueryDto } from './dto/get-history-query.dto';
 import { PermissionsGuard } from '../rbac/guards/permissions.guard';
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
+import { AbstractStorage } from './storage/abstract-storage';
 
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class TransformationsController {
   constructor(
     private readonly transformationsService: TransformationsService,
+    private readonly storage: AbstractStorage,
   ) {}
 
   @Get('api/convert/formats')
@@ -29,12 +31,27 @@ export class TransformationsController {
     return this.transformationsService.getFormats();
   }
 
+  @Get('api/convert/:fileId')
+  async downloadSavedFile(
+    @Param('fileId') fileId: string,
+    @Res() res: FastifyReply,
+  ) {
+    const stream = await this.storage.get(fileId);
+    const ext = fileId.split('.').pop();
+
+    res.header('Content-Disposition', `attachment; filename="download.${ext}"`);
+    return res.send(stream);
+  }
+
   @Post('api/convert')
   async convertFile(
     @Req() req: FastifyRequest,
     @Res() res: FastifyReply,
     @CurrentUser('id') userId: string,
+    @Query('save') saveQuery?: string,
   ) {
+    const shouldSave = saveQuery === 'true';
+
     if (!req.isMultipart()) {
       throw new BadRequestException('Request must be multipart/form-data');
     }
@@ -93,6 +110,33 @@ export class TransformationsController {
         targetFormat,
         options,
       );
+
+      if (shouldSave) {
+        const metadata = await this.storage.save(
+          result.stream,
+          result.extension,
+          result.contentType,
+        );
+
+        this.transformationsService
+          .logHistory({
+            userId,
+            type,
+            sourceFormat,
+            targetFormat,
+            status: 'success',
+            durationMs: Date.now() - startTime,
+            fileId: metadata.fileId,
+            fileSize: metadata.size,
+          })
+          .catch((err) => console.error('Failed to log history', err));
+
+        return res.send({
+          message: 'File converted and saved successfully',
+          fileId: metadata.fileId,
+          downloadUrl: `/api/convert/${metadata.fileId}`,
+        });
+      }
 
       this.transformationsService
         .logHistory({
