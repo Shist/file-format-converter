@@ -5,6 +5,7 @@ import {
 } from '@nestjs/platform-fastify';
 import compression from '@fastify/compress';
 import fastifyCookie from '@fastify/cookie';
+import fastifyMultipart from '@fastify/multipart';
 import { ValidationPipe } from '@nestjs/common';
 import {
   initializeTransactionalContext,
@@ -23,6 +24,12 @@ async function bootstrap() {
   );
 
   await app.register(compression);
+
+  await app.register(fastifyMultipart, {
+    limits: {
+      fileSize: 50 * 1024 * 1024, // todo: move it to config
+    },
+  });
 
   app.useGlobalPipes(
     new ValidationPipe({

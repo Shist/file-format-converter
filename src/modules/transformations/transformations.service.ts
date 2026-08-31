@@ -1,0 +1,48 @@
+import { Injectable, UnsupportedMediaTypeException } from '@nestjs/common';
+import { Readable } from 'stream';
+import {
+  ITransformationStrategy,
+  TransformationResult,
+} from './interfaces/transformation-strategy.interface';
+import { TextTransformationStrategy } from './strategies/text-transformation.strategy';
+
+@Injectable()
+export class TransformationsService {
+  private readonly strategies: ITransformationStrategy[];
+
+  constructor(
+    private readonly textStrategy: TextTransformationStrategy,
+    // todo: add ImageTransformationStrategy
+  ) {
+    this.strategies = [this.textStrategy];
+  }
+
+  getFormats() {
+    // todo: add images formats
+    return [
+      { source: 'csv', target: ['json', 'xml', 'yaml'] },
+      { source: 'json', target: ['csv', 'xml', 'yaml'] },
+      { source: 'xml', target: ['csv', 'json', 'yaml'] },
+      { source: 'yaml', target: ['csv', 'json', 'xml'] },
+    ];
+  }
+
+  async convert(
+    fileStream: Readable,
+    sourceFormat: string,
+    targetFormat: string,
+    options?: unknown,
+  ): Promise<TransformationResult> {
+    const strategy = this.strategies.find((s) =>
+      s.supports(sourceFormat, targetFormat),
+    );
+
+    if (!strategy) {
+      throw new UnsupportedMediaTypeException(
+        `Conversion from ${sourceFormat} to ${targetFormat} is not supported.`,
+      );
+    }
+
+    return strategy.transform(fileStream, targetFormat, options);
+  }
+}
