@@ -51,12 +51,34 @@ export class TransformationsController {
       );
     }
 
+    const options: Record<string, unknown> = { sourceFormat };
+
+    const qualityField = data.fields['quality'];
+    if (qualityField && 'value' in qualityField) {
+      options.quality = parseInt(String(qualityField.value), 10);
+    }
+
+    const widthField = data.fields['width'];
+    if (widthField && 'value' in widthField) {
+      options.width = parseInt(String(widthField.value), 10);
+    }
+
+    const heightField = data.fields['height'];
+    if (heightField && 'value' in heightField) {
+      options.height = parseInt(String(heightField.value), 10);
+    }
+
+    const backgroundField = data.fields['background'];
+    if (backgroundField && 'value' in backgroundField) {
+      options.background = String(backgroundField.value);
+    }
+
     try {
       const result = await this.transformationsService.convert(
         data.file,
         sourceFormat,
         targetFormat,
-        { sourceFormat },
+        options,
       );
 
       res.header('Content-Type', result.contentType);

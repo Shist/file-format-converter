@@ -5,6 +5,7 @@ import {
   TransformationResult,
 } from './interfaces/transformation-strategy.interface';
 import { TextTransformationStrategy } from './strategies/text-transformation.strategy';
+import { ImageTransformationStrategy } from './strategies/image-transformation.strategy';
 
 @Injectable()
 export class TransformationsService {
@@ -12,18 +13,20 @@ export class TransformationsService {
 
   constructor(
     private readonly textStrategy: TextTransformationStrategy,
-    // todo: add ImageTransformationStrategy
+    private readonly imageStrategy: ImageTransformationStrategy,
   ) {
-    this.strategies = [this.textStrategy];
+    this.strategies = [this.textStrategy, this.imageStrategy];
   }
 
   getFormats() {
-    // todo: add images formats
     return [
       { source: 'csv', target: ['json', 'xml', 'yaml'] },
       { source: 'json', target: ['csv', 'xml', 'yaml'] },
       { source: 'xml', target: ['csv', 'json', 'yaml'] },
       { source: 'yaml', target: ['csv', 'json', 'xml'] },
+      { source: 'png', target: ['jpeg'] },
+      { source: 'jpeg', target: ['png'] },
+      { source: 'svg', target: ['png', 'jpeg'] },
     ];
   }
 
