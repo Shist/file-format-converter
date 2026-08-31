@@ -12,6 +12,7 @@ import { ThrottlerModule } from '@/core/throttler/throttler.module';
  */
 import { AuthModule } from '@/modules/auth/auth.module';
 import { UsersModule } from '@/modules/users/users.module';
+import { TransformationsModule } from '@/modules/transformations/transformations.module';
 
 @Module({
   imports: [
@@ -26,6 +27,7 @@ import { UsersModule } from '@/modules/users/users.module';
      */
     AuthModule,
     UsersModule,
+    TransformationsModule,
   ],
 })
 export class AppModule {}
