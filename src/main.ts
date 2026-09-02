@@ -11,9 +11,9 @@ import {
   initializeTransactionalContext,
   StorageDriver,
 } from 'typeorm-transactional';
-
 import { AppModule } from './core/app/app.module';
 import { ConfigService } from '@/core/config/config.service';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 
 async function bootstrap() {
   initializeTransactionalContext({ storageDriver: StorageDriver.AUTO });
@@ -56,6 +56,16 @@ async function bootstrap() {
   await app.register(fastifyCookie, {
     secret: configService.get('COOKIE_SECRET'),
   });
+
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('File Format Converter')
+    .setDescription('API documentation for the File Format Converter app')
+    .setVersion('1.0')
+    .addCookieAuth('access_token')
+    .build();
+
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api/docs', app, document);
 
   const port = configService.get('PORT');
 

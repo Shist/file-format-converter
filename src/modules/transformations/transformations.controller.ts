@@ -9,6 +9,14 @@ import {
   Param,
   BadRequestException,
 } from '@nestjs/common';
+import {
+  ApiTags,
+  ApiOperation,
+  ApiCookieAuth,
+  ApiConsumes,
+  ApiBody,
+  ApiQuery,
+} from '@nestjs/swagger';
 import { type FastifyRequest, type FastifyReply } from 'fastify';
 import { TransformationsService } from './transformations.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
@@ -18,6 +26,8 @@ import { PermissionsGuard } from '../rbac/guards/permissions.guard';
 import { RequirePermissions } from '../rbac/decorators/require-permissions.decorator';
 import { AbstractStorage } from './storage/abstract-storage';
 
+@ApiTags('Transformations')
+@ApiCookieAuth()
 @UseGuards(JwtAuthGuard)
 @Controller()
 export class TransformationsController {
@@ -27,23 +37,61 @@ export class TransformationsController {
   ) {}
 
   @Get('api/convert/formats')
+  @ApiOperation({ summary: 'Get list of supported conversion formats' })
   getFormats() {
     return this.transformationsService.getFormats();
   }
 
   @Get('api/convert/:fileId')
+  @ApiOperation({ summary: 'Download a previously saved converted file' })
   async downloadSavedFile(
     @Param('fileId') fileId: string,
     @Res() res: FastifyReply,
   ) {
     const stream = await this.storage.get(fileId);
     const ext = fileId.split('.').pop();
-
     res.header('Content-Disposition', `attachment; filename="download.${ext}"`);
     return res.send(stream);
   }
 
   @Post('api/convert')
+  @ApiOperation({ summary: 'Convert a file to a target format' })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({
+    name: 'save',
+    required: false,
+    type: Boolean,
+    description: 'Save file to storage',
+  })
+  @ApiBody({
+    schema: {
+      type: 'object',
+      properties: {
+        file: {
+          type: 'string',
+          format: 'binary',
+          description: 'Source file to convert',
+        },
+        targetFormat: {
+          type: 'string',
+          description: 'Target format (e.g. json, xml, jpeg, png)',
+        },
+        quality: {
+          type: 'number',
+          description: 'JPEG quality (1-100)',
+          nullable: true,
+        },
+        width: { type: 'number', description: 'Image width', nullable: true },
+        height: { type: 'number', description: 'Image height', nullable: true },
+        background: {
+          type: 'string',
+          description: 'SVG rasterization background (e.g. #ffffff)',
+          nullable: true,
+        },
+      },
+      required: ['file', 'targetFormat'],
+    },
+  })
   async convertFile(
     @Req() req: FastifyRequest,
     @Res() res: FastifyReply,
@@ -178,6 +226,7 @@ export class TransformationsController {
   }
 
   @Get('api/transformations/history')
+  @ApiOperation({ summary: 'Get current user transformation history' })
   getSelfHistory(
     @CurrentUser('id') userId: string,
     @Query() query: GetHistoryQueryDto,
@@ -188,6 +237,7 @@ export class TransformationsController {
   @UseGuards(PermissionsGuard)
   @RequirePermissions('transformations.history.admin')
   @Get('admin/users/:userId/transformations/history')
+  @ApiOperation({ summary: 'Get specific user transformation history (Admin)' })
   getAdminHistory(
     @Param('userId') targetUserId: string,
     @Query() query: GetHistoryQueryDto,

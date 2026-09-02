@@ -1,9 +1,20 @@
+import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import { User } from '../user.entity';
 
 export class UserResponseDto {
+  @ApiProperty({ example: '123e4567-e89b-12d3-a456-426614174000' })
   id!: string;
+
+  @ApiProperty({ example: 'user@test.com' })
   email!: string;
+
+  @ApiPropertyOptional({
+    example: 'admin',
+    description: 'Omitted for non-privileged users',
+  })
   role?: string;
+
+  @ApiProperty({ example: '2026-08-27T07:06:44.218Z' })
   createdAt!: Date;
 
   static mapToResponse(user: User, isPrivileged: boolean): UserResponseDto {
