@@ -23,11 +23,13 @@ async function bootstrap() {
     new FastifyAdapter(),
   );
 
+  const configService = app.get(ConfigService);
+
   await app.register(compression);
 
   await app.register(fastifyMultipart, {
     limits: {
-      fileSize: 50 * 1024 * 1024, // todo: move it to config
+      fileSize: Number(configService.get('MAX_FILE_SIZE')),
     },
   });
 
@@ -50,8 +52,6 @@ async function bootstrap() {
     preflightContinue: false,
     optionsSuccessStatus: 204,
   });
-
-  const configService = app.get(ConfigService);
 
   await app.register(fastifyCookie, {
     secret: configService.get('COOKIE_SECRET'),

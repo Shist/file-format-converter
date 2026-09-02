@@ -33,4 +33,9 @@ export const configValidationSchema = Joi.object<Config>({
   POSTGRES_SYNCHRONIZE: Joi.boolean().optional().default(false),
   POSTGRES_LOGGING: Joi.boolean().optional().default(false),
   POSTGRES_MIGRATIONS_RUN: Joi.boolean().optional().default(false),
+
+  /**
+   * Files data options
+   */
+  MAX_FILE_SIZE: Joi.number().optional().default(52428800),
 });

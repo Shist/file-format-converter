@@ -29,4 +29,9 @@ export interface Config {
   POSTGRES_SYNCHRONIZE?: boolean;
   POSTGRES_LOGGING?: boolean;
   POSTGRES_MIGRATIONS_RUN?: boolean;
+
+  /**
+   * Files data options
+   */
+  MAX_FILE_SIZE: number;
 }
