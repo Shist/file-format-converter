@@ -5,6 +5,7 @@ import {
   CreateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { User } from '../../users/user.entity';
 
@@ -17,9 +18,11 @@ export class TransformationHistoryEntity {
   @JoinColumn({ name: 'user_id' })
   user!: User;
 
+  @Index()
   @Column({ name: 'user_id' })
   userId!: string;
 
+  @Index()
   @Column()
   type!: string;
 
@@ -29,6 +32,7 @@ export class TransformationHistoryEntity {
   @Column()
   targetFormat!: string;
 
+  @Index()
   @Column()
   status!: string;
 
@@ -44,6 +48,7 @@ export class TransformationHistoryEntity {
   @Column({ type: 'varchar', nullable: true })
   fileId!: string | null;
 
+  @Index()
   @CreateDateColumn()
   createdAt!: Date;
 }

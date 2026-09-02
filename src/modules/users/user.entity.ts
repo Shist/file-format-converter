@@ -6,6 +6,7 @@ import {
   UpdateDateColumn,
   ManyToOne,
   JoinColumn,
+  Index,
 } from 'typeorm';
 import { RoleEntity } from '../rbac/entities/role.entity';
 
@@ -24,6 +25,7 @@ export class User {
   @JoinColumn({ name: 'role_id' })
   role!: RoleEntity;
 
+  @Index()
   @CreateDateColumn()
   createdAt!: Date;
 
