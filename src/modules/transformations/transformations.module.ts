@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ScheduleModule } from '@nestjs/schedule'; // <-- Импорт
+import { ScheduleModule } from '@nestjs/schedule';
 import { TransformationsController } from './transformations.controller';
 import { TransformationsService } from './transformations.service';
 import { TextTransformationStrategy } from './strategies/text-transformation.strategy';

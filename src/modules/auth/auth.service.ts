@@ -50,8 +50,6 @@ export class AuthService {
     const user = await this.usersService.findByEmail(email);
 
     if (!user) {
-      // TODO: In the future, we'll make it so that new users register here automatically.
-      // For now, we're throwing an error because the passwordHash column is required in the database.
       throw new UnauthorizedException('User with this email not found');
     }
 
